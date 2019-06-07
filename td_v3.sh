@@ -46,15 +46,19 @@ case "$1" in
 
 	echo -n "Type Process PID, followed by [ENTER]:"
 	read TD_PID
+	re='^[0-9]+$'
+	if [ -z "$TD_PID" ] ; then
+	   echo -e "PID is empty" >&2; exit 1
+	elif ! [[ $TD_PID =~ $re ]] ; then
+	   echo "error: Not a number" >&2; exit 1
+	fi
 	ps -aef | grep $TD_PID | grep java | grep -v grep >/dev/null 2>&1
 	pidd=$?
-	re='^[0-9]+$'
-	if ! [[ $TD_PID =~ $re ]] ; then
-	   echo "error: Not a number" >&2; exit 1
-	elif [ "$pidd" != 0 ]; then
+			
+	if [ "$pidd" != 0 ]; then
 		echo -e "${r}Invalid PID${n}"
+        exit 1
 	fi
-
 	echo -n "Number of Thread dumps to be taken [ENTER]:"
 	read NTD
 	sleep 1

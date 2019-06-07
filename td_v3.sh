@@ -97,6 +97,19 @@ a=1;
 	$((a++)) >/dev/null 2>&1
 	((x++))
 	done
+	
+##### Some quick analysis ######
+cd $TD_PATH
+for i in $( eval echo {1..$NTD} )
+do
+        echo "########################################################"
+        echo "Below is a quick analysis for threaddump $i "
+        cat TD_$i.txt | grep java.lang.Thread.State | sort -n | uniq -c
+        echo "########################################################"
+done
+
+#################################
+
 
 #########Cleaning UP#########
 cd $TD_PATH
@@ -106,6 +119,3 @@ tar -cvzf td_$(date '+%d_%m_%Y_%H_%M_%S').tar.gz TD*.txt
 sleep 2
 rm TD*.txt
 #############################
-
-
-

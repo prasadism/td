@@ -9,6 +9,7 @@
 r='\033[0;31m'
 g='\033[0;32m'
 n='\033[0m'
+
 case "$1" in 
 	F|l)
 	# Some interactivity and validation

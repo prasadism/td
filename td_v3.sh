@@ -71,18 +71,11 @@ case "$1" in
 	if ! [[ $TI =~ $re ]] ; then
 	   echo "error: Not a number" >&2; exit 1
 	fi
-	;;
-	*)
-	echo -e "Please use either l or F , l is recomended if, use F only when the process is hung, or l does not produce thread dumps"
-	exit 1
-	;;
-esac
+	# Initialising some variables
+	x=1;
+	a=1;
 
-# Initialising some variables
-x=1;
-a=1;
-
-# Actual Stuff
+	# Actual Stuff
 
 
 	while [ $x -le $NTD ]
@@ -95,13 +88,19 @@ a=1;
 			sleep $TI
 		fi
 	echo -e "thread_dump $a ${r}is being taken${n}"
-	$JAVA_HOME/bin/jstack -l $TD_PID > $TD_PATH/TD_$a.txt
+	$JAVA_HOME/bin/jstack -$1 $TD_PID > $TD_PATH/TD_$a.txt
 	sleep 1
 	echo -e "thread dump $a ${g} is now available ${n}"
 	sleep 1
 	$((a++)) >/dev/null 2>&1
 	((x++))
 	done
+	;;
+	*)
+	echo -e "Please use either l or F , l is recomended if, use F only when the process is hung, or l does not produce thread dumps"
+	exit 1
+	;;
+esac
 	
 ##### Some quick analysis ######
 cd $TD_PATH

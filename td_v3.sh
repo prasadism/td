@@ -12,6 +12,10 @@ n='\033[0m'
 
 case "$1" in 
 	F|l)
+	if [[ "$1" -eq F && $EUID -ne 0 ]]; then
+   		echo "This script must be run as root, if using option F" 
+   		exit 1
+        fi
 	# Some interactivity and validation
 	echo -n "Type JAVA_HOME, followed by [ENTER]:"
 	read JAVA_HOME
@@ -97,7 +101,7 @@ case "$1" in
 	done
 	;;
 	*)
-	echo -e "Please use either l or F , l is recomended if, use F only when the process is hung, or l does not produce thread dumps"
+	echo -e "Please use either l or F option , l is recomended option. Use option F only when the process is hung, or l does not produce thread dumps. For using F , please switch to Root first "
 	exit 1
 	;;
 esac

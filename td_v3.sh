@@ -12,7 +12,7 @@ n='\033[0m'
 
 case "$1" in 
 	F|l)
-	if [[ "$1" -eq F && $EUID -ne 0 ]]; then
+	if [[ "$1" == F && $EUID -ne 0 ]]; then
    		echo "This script must be run as root, if using option F" 
    		exit 1
         fi

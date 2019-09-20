@@ -123,7 +123,8 @@ done
 cd $TD_PATH
 echo -e "***** ${g} moving below $NTD file/s in a tar.gz archive named td_$(date '+%d_%m_%Y_%H_%M_%S').tar.gz ${n} ***** "
 sleep 1
-tar -cvzf td_$(date '+%d_%m_%Y_%H_%M_%S').tar.gz TD*.txt
+#tar -cvzf td_$(date '+%d_%m_%Y_%H_%M_%S').tar.gz TD*.txt
+tar -cvzf td_$(date '+%d_%m_%Y_%H_%M_%S').gz TD*.txt
 sleep 2
 rm TD*.txt
 #############################

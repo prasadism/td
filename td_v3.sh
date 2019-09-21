@@ -11,9 +11,9 @@ g='\033[0;32m'
 n='\033[0m'
 
 case "$1" in 
-	F|l)
+	-F|-l)
 	if [[ "$1" == F && $EUID -ne 0 ]]; then
-   		echo "This script must be run as root, if using option F" 
+   		echo "This script must be run as root, if using option -F" 
    		exit 1
         fi
 	# Some interactivity and validation
@@ -101,7 +101,7 @@ case "$1" in
 	done
 	;;
 	*)
-	echo -e "Please use either l or F option , l is recomended option. Use option F only when the process is hung, or l does not produce thread dumps. For using F , please switch to Root first "
+	echo -e "Please use either -l or -F option , -l is recomended option. Use option -F only when the process is hung, or -l does not produce thread dumps. For using -F , please switch to Root first "
 	exit 1
 	;;
 esac

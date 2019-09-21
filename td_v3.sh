@@ -47,6 +47,7 @@ case "$1" in
 	   TD_PATH=$(pwd);
 	   test -d $TD_PATH;
 	   tdp=$?
+	   sleep 1
 	fi
 	
 	if [[  "$tdp" != 0 ]] ; then

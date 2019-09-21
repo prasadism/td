@@ -98,7 +98,7 @@ case "$1" in
 			sleep $TI
 		fi
 	echo -e "thread_dump $a ${r}is being taken${n}"
-	$JAVA_HOME/bin/jstack -$1 $TD_PID > $TD_PATH/TD_$a.txt
+	$JAVA_HOME/bin/jstack $1 $TD_PID > $TD_PATH/TD_$a.txt
 	sleep 1
 	echo -e "thread dump $a ${g} is now available ${n}"
 	sleep 1

@@ -44,6 +44,7 @@ case "$1" in
 	
 	if [ -z "$TD_PATH" ] ; then
 	   echo -e "Thread Dump path is empty, continuing to use the current path as thread dump path" >&2;
+	   TD_PATH=$(pwd);
 	fi
 	
 	if [[  "$tdp" != 0 ]] ; then

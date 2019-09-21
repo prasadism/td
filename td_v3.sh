@@ -39,14 +39,19 @@ case "$1" in
 	read TD_PATH
 	test -d $TD_PATH
 	tdp=$?
+	
 	sleep 1
+	
 	if [ -z "$TD_PATH" ] ; then
-	   echo -e "Thread Dump path is empty" >&2; exit 1
-	elif [[  "$tdp" != 0 ]] ; then
+	   echo -e "Thread Dump path is empty, continuing to use the current path as thread dump path" >&2;
+	fi
+	
+	if [[  "$tdp" != 0 ]] ; then
 		echo -e "${r}Invalid Thread Dump path${n}" >&2; exit 1
 	elif ! [ -w $TD_PATH ] ; then
 		echo -e "Your user does not have write permissions to Thread Dump path mentioned"; exit 1
 	fi
+	
 	sleep 1
 
 	echo -n "Type Process PID, followed by [ENTER]:"

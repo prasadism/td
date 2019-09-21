@@ -10,6 +10,7 @@ r='\033[0;31m'
 g='\033[0;32m'
 n='\033[0m'
 
+cwTD=($pwd)
 case "$1" in 
 	-F|-l)
 	if [[ "$1" == -F && $EUID -ne 0 ]]; then
@@ -33,7 +34,7 @@ case "$1" in
 	elif [ "$jst" !=  0 ]; then
 		echo -e "${r}JSTACK application was not found${n}" >&2; exit 1
 	fi
-	sleep 1
+	#sleep 1
 
 	echo -n  "Type Thread Dump path , followed by [ENTER]:"
 	read TD_PATH
@@ -44,16 +45,16 @@ case "$1" in
 	
 	if [ -z "$TD_PATH" ] ; then
 	   echo -e "Thread Dump path is empty, continuing to use the current path as thread dump path" >&2;
-	   TD_PATH=$(pwd);
-	   test -d $TD_PATH;
-	   tdp=$?
-	   sleep 1
+           cd $cwTD
+	   TD_PATH="`( cd \"$TD_PATH\" && pwd )`";
+           sleep 1
 	fi
-	
 	if [[  "$tdp" != 0 ]] ; then
 		echo -e "${r}Invalid Thread Dump path${n}" >&2; exit 1
 	elif ! [ -w $TD_PATH ] ; then
+                echo $TD_PATH
 		echo -e "Your user does not have write permissions to Thread Dump path mentioned"; exit 1
+
 	fi
 	
 	sleep 1
@@ -130,7 +131,7 @@ done
 
 #########Cleaning UP#########
 cd $TD_PATH
-echo -e "***** ${g} moving below $NTD file/s in a tar.gz archive named td_$(date '+%d_%m_%Y_%H_%M_%S').tar.gz ${n} ***** "
+echo -e "***** ${g} moving below $NTD file/s in a gz archive named td_$(date '+%d_%m_%Y_%H_%M')...gz ${n} ***** "
 sleep 1
 #tar -cvzf td_$(date '+%d_%m_%Y_%H_%M_%S').tar.gz TD*.txt
 tar -cvzf td_$(date '+%d_%m_%Y_%H_%M_%S').gz TD*.txt

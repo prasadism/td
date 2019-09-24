@@ -10,7 +10,7 @@ r='\033[0;31m'
 g='\033[0;32m'
 n='\033[0m'
 
-cwTD=($pwd)
+cwTD=`pwd`
 case "$1" in 
 	-F|-l)
 	if [[ "$1" == -F && $EUID -ne 0 ]]; then

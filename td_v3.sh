@@ -10,14 +10,31 @@ r='\033[0;31m'
 g='\033[0;32m'
 n='\033[0m'
 
+#echo $5
+#echo $0
+
+function jumpto
+        {
+         label=$1
+          cmd=$(sed -n "/$label:/{:a;n;p;ba};" $0 | grep -v ':$')
+          eval "$cmd"
+          exit
+         }
+
 cwTD=`pwd`
 case "$1" in 
 	-F|-l)
-	if [[ "$1" == -F && $EUID -ne 0 ]]; then
+         mde=$1
+         shift
+
+
+	if [[ "$mde" == -F && $EUID -ne 0 ]]; then
    		echo "This script must be run as root, if using option -F" 
    		exit 1
         fi
 	# Some interactivity and validation
+	shift
+	getJAVAPATH: 2> /dev/null
 	echo -n "Type JAVA_HOME, followed by [ENTER]:"
 	read JAVA_HOME
 	test -d $JAVA_HOME
@@ -28,15 +45,24 @@ case "$1" in
 	jst=$?
 	sleep 1
 	if [ -z "$JAVA_HOME" ] ; then
-	   echo -e "${r}JAVA_HOME is empty${n}" >&2; exit 1 
+	   echo -e "${r}JAVA_HOME is empty${n}"
+	   cd $cwTD 
+	   jumpto getJAVAPATH
 	elif [[  "$tjp" != 0 ]] ; then
-		echo -e "${r}Invalid JAVA path${n}" >&2; exit 1
+		echo -e "${r}Invalid JAVA path${n}" >&2;
+                cd $cwTD
+                jumpto getJAVAPATH
 	elif [ "$jst" !=  0 ]; then
 		echo -e "${r}JSTACK application was not found${n}" >&2; exit 1
 	fi
 	#sleep 1
 
+	cd $cwTD
+	shift
+
+        getTDPATH: 2> /dev/null	
 	echo -n  "Type Thread Dump path , followed by [ENTER]:"
+	
 	read TD_PATH
 	test -d $TD_PATH
 	tdp=$?
@@ -50,41 +76,64 @@ case "$1" in
            sleep 1
 	fi
 	if [[  "$tdp" != 0 ]] ; then
-		echo -e "${r}Invalid Thread Dump path${n}" >&2; exit 1
+		echo -e "${r}Invalid Thread Dump path${n}" >&2;
+		jumpto getTDPATH
 	elif ! [ -w $TD_PATH ] ; then
                 echo $TD_PATH
-		echo -e "Your user does not have write permissions to Thread Dump path mentioned"; exit 1
-
+		echo -e "Your user does not have write permissions to Thread Dump path mentioned";
+		jumpto getTDPATH
 	fi
 	
 	sleep 1
 
+	cd $cwTD
+	shift
+        
+        getPID: 2> /dev/null
 	echo -n "Type Process PID, followed by [ENTER]:"
+
 	read TD_PID
 	re='^[0-9]+$'
 	if [ -z "$TD_PID" ] ; then
-	   echo -e "PID is empty" >&2; exit 1
+	   echo -e "PID is empty" >&2; 
+           jumpto getPID
 	elif ! [[ $TD_PID =~ $re ]] ; then
-	   echo "error: Not a number" >&2; exit 1
+	   echo "error: Not a number" >&2;
+           jumpto getPID
 	fi
 	ps -aef | grep $TD_PID | grep java | grep -v grep >/dev/null 2>&1
 	pidd=$?
 			
 	if [ "$pidd" != 0 ]; then
 		echo -e "${r}Invalid PID${n}"
-        exit 1
+               jumpto getPID 
 	fi
+    
+	cd $cwTD
+	shift
+
+	getNTD: 2> /dev/null
 	echo -n "Number of Thread dumps to be taken [ENTER]:"
+
 	read NTD
 	sleep 1
 	if ! [[ $NTD =~ $re ]] ; then
-	   echo "error: Not a number" >&2; exit 1
+	   echo "error: Not a number" >&2;
+           jumpto getNTD
 	fi
+
+        cd $cwTD
+        shift
+
+        getT: 2> /dev/null
 	echo -n "Time interval of the threadump in seconds [ENTER]:"
+
 	read TI
 	if ! [[ $TI =~ $re ]] ; then
-	   echo "error: Not a number" >&2; exit 1
+	   echo "error: Not a number" >&2;
+           jumpto getT
 	fi
+
 	# Initialising some variables
 	x=1;
 	a=1;
@@ -102,7 +151,7 @@ case "$1" in
 			sleep $TI
 		fi
 	echo -e "thread_dump $a ${r}is being taken${n}"
-	$JAVA_HOME/bin/jstack $1 $TD_PID > $TD_PATH/TD_$a.txt
+	$JAVA_HOME/bin/jstack $mde $TD_PID > $TD_PATH/TD_$a.txt
 	sleep 1
 	echo -e "thread dump $a ${g} is now available ${n}"
 	sleep 1

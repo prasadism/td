@@ -1,4 +1,4 @@
-# td
+# ptd
 Interactive script to take periodic thread dumps.
 
 Make sure that you do a ps -aef | grep java and identify the pid for which you need the thread dump. 

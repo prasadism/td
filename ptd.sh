@@ -3,6 +3,7 @@
 ######################################################  
 #  Author : Prasad Gujar                             #
 #  Script for taking multiple periodic thread dumps  #
+#  version : 3.0                                     #
 ######################################################
 
 # Defining some color variables
@@ -10,142 +11,207 @@ r='\033[0;31m'
 g='\033[0;32m'
 n='\033[0m'
 
-#echo $5
-#echo $0
-
-function jumpto
-        {
-         label=$1
-          cmd=$(sed -n "/$label:/{:a;n;p;ba};" $0 | grep -v ':$')
-          eval "$cmd"
-          exit
-         }
-
 cwTD=`pwd`
-case "$1" in 
-	-F|-l)
-         mde=$1
-         shift
+
+function javaVars {
+	test -d $JAVA_HOME
+        tjp=$?
+        cd $JAVA_HOME/bin >/dev/null 2>&1
+        ls -lhtr | grep -w jstack >/dev/null 2>&1
+        jst=$?
+      }
 
 
-	if [[ "$mde" == -F && $EUID -ne 0 ]]; then
-   		echo "This script must be run as root, if using option -F" 
-   		exit 1
-        fi
-	# Some interactivity and validation
-	shift
-	getJAVAPATH: 2> /dev/null
-	echo -n "Type JAVA_HOME, followed by [ENTER]:"
+function javaPATH {
+   	echo -n "Type JAVA_HOME, followed by [ENTER]:"
 	read JAVA_HOME
 	test -d $JAVA_HOME
 	tjp=$?
-	sleep 1
 	cd $JAVA_HOME/bin >/dev/null 2>&1
-	ls -lhtr | grep jstack >/dev/null 2>&1
+	ls -lhtr | grep -w jstack >/dev/null 2>&1
 	jst=$?
-	sleep 1
-	if [ -z "$JAVA_HOME" ] ; then
-	   echo -e "${r}JAVA_HOME is empty${n}"
-	   cd $cwTD 
-	   jumpto getJAVAPATH
-	elif [[  "$tjp" != 0 ]] ; then
-		echo -e "${r}Invalid JAVA path${n}" >&2;
+	}
+
+function javaEmptyCheck {
+        while [ -z "$JAVA_HOME" ] ; do
+                echo -e "${r}JAVA_HOME is empty, please enter proper JAVA_HOME path ${n}"
                 cd $cwTD
-                jumpto getJAVAPATH
-	elif [ "$jst" !=  0 ]; then
-		echo -e "${r}JSTACK application was not found${n}" >&2; exit 1
+                javaPATH
+        done
+        }
+
+function invalidJavaCheck {
+        while [  "$tjp" != 0 ] ; do
+                echo -e "${r}Java_HOME path is invalid , please enter proper JAVA_HOME${n}"
+                cd $cwTD
+                javaPATH
+                javaEmptyCheck
+        done
+        }
+
+function jstackCheck {
+	if [ "$jst" !=  0 ]; then
+        	echo -e "${r}JSTACK application was not found${n}" >&2; exit 1
 	fi
-	#sleep 1
 
-	cd $cwTD
-	shift
+        }
 
-        getTDPATH: 2> /dev/null	
-	echo -n  "Type Thread Dump path , followed by [ENTER]:"
-	
-	read TD_PATH
-	test -d $TD_PATH
-	tdp=$?
-	
-	sleep 1
-	
-	if [ -z "$TD_PATH" ] ; then
+function javaCheck {
+        
+             javaVars
+             invalidJavaCheck
+             jstackCheck
+           }
+
+function tdPATH {
+        echo -n "Type Thread Dump path , followed by [ENTER]:"
+        read TD_PATH
+        test -d $TD_PATH
+        tdp=$?
+        test -d $JAVA_HOME
+        }
+
+function emptdPATH {
+            
+	   if [ -z "$TD_PATH" ] ; then
 	   echo -e "Thread Dump path is empty, continuing to use the current path as thread dump path" >&2;
            cd $cwTD
 	   TD_PATH="`( cd \"$TD_PATH\" && pwd )`";
-           sleep 1
 	fi
-	if [[  "$tdp" != 0 ]] ; then
-		echo -e "${r}Invalid Thread Dump path${n}" >&2;
-		jumpto getTDPATH
-	elif ! [ -w $TD_PATH ] ; then
-                echo $TD_PATH
-		echo -e "Your user does not have write permissions to Thread Dump path mentioned";
-		jumpto getTDPATH
-	fi
-	
-	sleep 1
+        }
 
-	cd $cwTD
-	shift
-        
-        getPID: 2> /dev/null
+function tdINVALIDPATH {
+	while [[  "$tdp" != 0 ]]; 
+	do echo -e "${r}Invalid Thread Dump path${n}"
+	    tdPATH
+            emptdPATH
+	done
+}
+
+function tdpathPERM {	
+        while ! [ -w $TD_PATH ] ; 
+        do  echo -e "Your user does not have write permissions to Thread Dump path mentioned"
+           tdPATH
+           emptdPATH
+        done
+        }
+
+function wlsPID {
+        echo
+	echo "############################## Below WLS Process IDs are Running on this server #############"
+        echo
+	ps -aef | grep -v grep  | grep Dweblogic.Name | awk '{ print $2 " " $16 }'
+		
+        echo
+        echo "############################################################################################"
+  	echo
+        }
+
+function checkPID {
+        ps -aef | grep -v grep | grep  java | grep $TD_PID  > PID.txt
+        pidd=$?
+	} 
+
+function getPID { 
 	echo -n "Type Process PID, followed by [ENTER]:"
-
 	read TD_PID
 	re='^[0-9]+$'
-	if [ -z "$TD_PID" ] ; then
-	   echo -e "PID is empty" >&2; 
-           jumpto getPID
-	elif ! [[ $TD_PID =~ $re ]] ; then
-	   echo "error: Not a number" >&2;
-           jumpto getPID
-	fi
-	ps -aef | grep $TD_PID | grep java | grep -v grep >/dev/null 2>&1
-	pidd=$?
-			
-	if [ "$pidd" != 0 ]; then
-		echo -e "${r}Invalid PID${n}"
-               jumpto getPID 
-	fi
-    
-	cd $cwTD
-	shift
+	}
+function checkValidPID {
+	checkPID
+        while [ "$pidd" != "0" ]
+        do
+        echo -e "INVALID PID"
+        unset TD_PID
+        getPID
+        checkPID
+        checkemptPID
+        numCHECKPID
+        done
+        }
 
-	getNTD: 2> /dev/null
-	echo -n "Number of Thread dumps to be taken [ENTER]:"
 
-	read NTD
-	sleep 1
-	if ! [[ $NTD =~ $re ]] ; then
-	   echo "error: Not a number" >&2;
-           jumpto getNTD
-	fi
+function checkemptPID {
+		while [ -z "$TD_PID" ] ; do
+                echo -e "PID is empty"
+		getPID
+		done
+		}
 
-        cd $cwTD
-        shift
+function numCHECKPID {
+                re='^[0-9]+$'
+                while ! [[ $TD_PID =~ $re ]]
+                do
+                echo "error Not a number"
+		getPID
+		checkemptPID
+                done
+		}
 
-        getT: 2> /dev/null
-	echo -n "Time interval of the threadump in seconds [ENTER]:"
 
-	read TI
-	if ! [[ $TI =~ $re ]] ; then
-	   echo "error: Not a number" >&2;
-           jumpto getT
-	fi
+function numTD { 
+		echo -n "Number of Thread dumps to be taken [ENTER]:"
+		read NTD
+         }
+function numCheck {
+                re='^[0-9]+$'
+		while  ! [[ $NTD =~ $re ]] 
+		do
+		  echo "error: Not a number"
+           	  numTD
+		done
+                }
 
-	# Initialising some variables
+function timeTD {
+		echo -n "Time interval of the threadump in seconds [ENTER]:"
+		read TI
+		}
+
+function timeCheck {
+		while  ! [[ $TI =~ $re ]]
+		do
+		 echo "error: Not a number"
+                 timeTD
+		done
+		}
+
+function takePTD {
+    if ! [ -z "$JAVA_HOME" ] ; then 
+    javaCheck
+    else
+    javaPATH
+    javaEmptyCheck
+    invalidJavaCheck
+    jstackCheck
+    fi
+
+    tdPATH
+    emptdPATH
+    tdINVALIDPATH
+    tdpathPERM
+
+    #wlsPID
+
+    getPID
+    checkemptPID
+    numCHECKPID
+    checkValidPID
+
+    numTD
+    numCheck
+    timeTD
+    timeCheck
+
+    # Initialising some variables
 	x=1;
 	a=1;
 
-	# Actual Stuff
-
-
+       ## Actual Stuff
 	while [ $x -le $NTD ]
 	do
 		if [ $x = 1 ]; then
 			echo -e "********  NOW TAKING THREAD DUMPS *************"
-			sleep 2
+			sleep 1
 		else
 			echo -e "********  ${g}Now waiting for $TI seconds before taking  thread dump $a ${n} *************"
 			sleep $TI
@@ -155,16 +221,25 @@ case "$1" in
 	sleep 1
 	echo -e "thread dump $a ${g} is now available ${n}"
 	sleep 1
-	$((a++)) >/dev/null 2>&1
+	#$((a++)) >/dev/null 2>&1
+	((a++))
 	((x++))
 	done
-	;;
+
+}
+
+cwTD=`pwd`
+case "$1" in 
+	-F|-l)
+    mde=$1
+    shift
+    takePTD
+  	;;
 	*)
-	echo -e "Please use either -l or -F option , -l is recomended option. Use option -F only when the process is hung, or -l does not produce thread dumps. For using -F , please switch to Root first "
-	exit 1
+    takePTD
 	;;
 esac
-	
+
 ##### Some quick analysis ######
 cd $TD_PATH
 for i in $( eval echo {1..$NTD} )
@@ -186,4 +261,5 @@ sleep 1
 tar -cvzf td_$(date '+%d_%m_%Y_%H_%M_%S').gz TD*.txt
 sleep 2
 rm TD*.txt
+rm PID.txt
 #############################
